@@ -51,7 +51,7 @@ class METADATA(Structure):
     _fields_ = [("classes", c_int),
                 ("names", POINTER(c_char_p))]
 
-lib = CDLL("/media/lcq/Data/modle_and_code/env_linux/yolov4/libdark.so", RTLD_GLOBAL)
+lib = CDLL("/media/lcq/Data/modle_and_code/install_linux/yolov4/libdark.so", RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]
@@ -291,35 +291,54 @@ def performDetect(imagePath="data/dog.jpg", thresh= 0.25, configPath = "./cfg/yo
     return detections
 
 
-def get_file_name(file_dir):
+def get_file_name(file_dir, form=['jpg','png']):
     """
-    获取指定文件夹内的文件名称
-    file_dir：文件夹地址
-    file_name：读取到的文件绝对地址
+    功能：
+        获取指定文件夹内的文件名称
+    输入：
+        file_dir：文件夹地址
+    输出：
+        root：路径
+        file_name：读取到的文件绝对地址
     """
     
     file_name = []
 
     for root, dirs, files in os.walk(file_dir):
         for file in files:
-            file_name.append(file)
+
+            if file.split('.')[1] in form:
+                file_name.append(file)
+
         return root, file_name
 
 
 def image_list():
-    root, images_name = get_file_name('/home/lc/Downloads/img/')
+
+    file_dir = '/media/lcq/Data/modle_and_code/3_expdata/20210628-CompareDL/'
+    root, images_name = get_file_name(file_dir)
+
+    Color_list = [(225,0,0), (0,225,0),(0.0,225), (153,50,4),(255,140,0),(255,20,147)]
     
     i = 1
 
     for image_name in images_name:
-        print('正在处理第 %d 张图片'%i)
+        
         image = root + image_name
-
         image_read = cv2.imread(image)
-        person_number = 0
-        detections = performDetect(image,thresh= 0.25, configPath = "./cfg/yolov3.cfg", weightPath = "yolov3.weights", metaPath= "./cfg/coco.data")
+        image_labled = image_read.copy()
+        print('开始处理第 %d 张图片...'%i)        
+        
+        detections = performDetect(image,\
+                                    thresh= 0.5, \
+                                    configPath = "./cfg/yolov3.cfg", \
+                                    weightPath = "./weights/yolov3.weights", \
+                                    metaPath= "./cfg/coco.data")
         
         for detection in detections:
+
+            object_number = 0
+
             # 获取检测结果
             label = detection[0]
             confidence = detection[1]
@@ -328,65 +347,29 @@ def image_list():
             w, h = bounds[2], bounds[3]
             left, top, right, bottom = map(int, (center_x-w/2, center_y-h/2, center_x+w/2, center_y+h/2))
             
-            if confidence >= 0.25:
-                # 判断行人数量
-                if label == 'person':
-                    # 矩形框标注
-                    boxColor = boxColor = (int(255 * (1 - (confidence ** 2))), int(255 * (confidence ** 2)), 0)
-                    image_labled = cv2.rectangle(image_read, (left, top), (right, bottom), boxColor, 2)
-                    cv2.putText(image_labled, label + " [" + str(round(confidence, 2)) + "]",
-                                (left, top-5), cv2.FONT_HERSHEY_SIMPLEX, 1.2, boxColor, 2)
-                    
-                    person_number += 1
-            
-        with open('/home/lc/Downloads/img_out/number.txt', 'a') as f:
-            f.write(image_name + ',' + str(person_number) + '\n')
+            if confidence >= 0.4:
+                # 矩形框标注
+                boxColor = Color_list[random.randint(0,len(Color_list)-1)]
+                cv2.rectangle(image_labled, (left, top), (right, bottom), boxColor, 2)
+                cv2.putText(image_labled, label + " " + str(round(confidence, 2)),
+                                (left, top-10), cv2.FONT_HERSHEY_SIMPLEX, 1, boxColor, 1)
+
+                object_number += 1
+
+        # 保存数据
+        saveData = False
+        savaPath =  file_dir
+        if saveData:
+            with open(savaPath + 'number.txt', 'a') as f:
+                f.write(image_name + ',' + str(object_number) + '\n')
 
         # 图片输出和保存
-        save_path = '/home/lc/Downloads/img_out/'
-        image_name = save_path + image_name + '.jpg'
+        image_name = savaPath + image_name.split('.')[0] + '_yolov4.jpg'
         cv2.imwrite(image_name, image_labled)
 
         i += 1
 
-def image_one(image_path):
-    image_read = cv2.imread(image_path)
-
-    person_number = 0
-    detections = performDetect(image_read,thresh= 0.25, configPath = "./cfg/yolov3.cfg", weightPath = "yolov3.weights", metaPath= "./cfg/coco.data")
-    for detection in detections:
-        # 获取检测结果
-        label = detection[0]
-        confidence = detection[1]
-        bounds = detection[2]
-        center_x, center_y = bounds[0], bounds[1]
-        w, h = bounds[2], bounds[3]
-        left, top, right, bottom = map(int, (center_x-w/2, center_y-h/2, center_x+w/2, center_y+h/2))
-        
-        if confidence >= 0.25:
-            # 判断行人数量
-            if label == 'person':
-                # 矩形框标注
-                boxColor = boxColor = (int(255 * (1 - (confidence ** 2))), int(255 * (confidence ** 2)), 0)
-                image_labled = cv2.rectangle(image_read, (left, top), (right, bottom), boxColor, 2)
-                cv2.putText(image_labled, label + " [" + str(round(confidence, 2)) + "]",
-                            (left, top-5), cv2.FONT_HERSHEY_SIMPLEX, 1.2, boxColor, 2)
-                
-                person_number += 1
-    # 保存数据
-    save_data = False
-    if save_data:
-        with open('/home/lc/Downloads/img_out/number.txt', 'a') as f:
-            f.write(images_name + ',' + str(person_number) + '\n')
-
-    # 图片输出和保存
-    save_img = False
-    if save_img:
-        save_path = '/home/lc/Downloads/img_out/'
-        image_name = save_path + images_name + '.jpg'
-        cv2.imwrite(image_name, image_labled)
-
 
 if __name__ == "__main__":
-    image_one('/media/lcq/Data/项目/临时工作/2019-样本库/论文图片/标注1.jpg')
-    # image_list()
+
+    image_list()
