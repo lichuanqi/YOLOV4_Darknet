@@ -79,7 +79,7 @@ class METADATA(Structure):
 
 
 
-#lib = CDLL("/home/pjreddie/documents/darknet/libdarknet.so", RTLD_GLOBAL)
+#lib = CDLL("/media/lc/Data/modle_and_code/env_linux/yolov4/libdarknet.so", RTLD_GLOBAL)
 #lib = CDLL("libdarknet.so", RTLD_GLOBAL)
 hasGPU = True
 if os.name == "nt":
@@ -124,7 +124,7 @@ if os.name == "nt":
             lib = CDLL(winGPUdll, RTLD_GLOBAL)
             print("Environment variables indicated a CPU run, but we didn't find `"+winNoGPUdll+"`. Trying a GPU run anyway.")
 else:
-    lib = CDLL("./libdarknet.so", RTLD_GLOBAL)
+    lib = CDLL("/media/lc/Data/modle_and_code/env_linux/yolov4/libdark.so", RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]
@@ -461,7 +461,7 @@ def performBatchDetect(thresh= 0.25, configPath = "./cfg/yolov4.cfg", weightPath
     import numpy as np
     # NB! Image sizes should be the same
     # You can change the images, yet, be sure that they have the same width and height
-    img_samples = ['data/person.jpg', 'data/person.jpg', 'data/person.jpg']
+    img_samples = ['/media/lc/Data/modle_and_code/data/image/960-540-222.jpg', '/media/lc/Data/modle_and_code/data/image/960-540-470.jpg', '/media/lc/Data/modle_and_code/data/image/1920-1080-500.jpg']
     image_list = [cv2.imread(k) for k in img_samples]
 
     net = load_net_custom(configPath.encode('utf-8'), weightPath.encode('utf-8'), 0, batch_size)
@@ -522,6 +522,6 @@ def performBatchDetect(thresh= 0.25, configPath = "./cfg/yolov4.cfg", weightPath
     return batch_boxes, batch_scores, batch_classes    
 
 if __name__ == "__main__":
-    print(performDetect())
+    print(performDetect('/media/lc/Data/modle_and_code/data/image/1920-1080-500.jpg'))
     #Uncomment the following line to see batch inference working 
     #print(performBatchDetect())
