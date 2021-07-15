@@ -2,6 +2,7 @@ from ctypes import *
 import math
 import random
 import os
+import time
 
 import cv2
 
@@ -315,11 +316,14 @@ def get_file_name(file_dir, form=['jpg','png']):
 
 def image_list():
 
-    file_dir = '/media/lcq/Data/modle_and_code/3_expdata/20210628-CompareDL/'
+    file_dir = '/media/lcq/Data/modle_and_code/DataSet/0708pf/'
     root, images_name = get_file_name(file_dir)
 
     Color_list = [(225,0,0), (0,225,0),(0.0,225), (153,50,4),(255,140,0),(255,20,147)]
     
+    print('===================== Statr =====================')
+    start_time = time.time()
+
     i = 1
 
     for image_name in images_name:
@@ -331,8 +335,8 @@ def image_list():
         
         detections = performDetect(image,\
                                     thresh= 0.5, \
-                                    configPath = "./cfg/yolov3.cfg", \
-                                    weightPath = "./weights/yolov3.weights", \
+                                    configPath = "./cfg/yolov4.cfg", \
+                                    weightPath = "./weights/yolov4.weights", \
                                     metaPath= "./cfg/coco.data")
         
         for detection in detections:
@@ -350,15 +354,17 @@ def image_list():
             if confidence >= 0.4:
                 # 矩形框标注
                 boxColor = Color_list[random.randint(0,len(Color_list)-1)]
-                cv2.rectangle(image_labled, (left, top), (right, bottom), boxColor, 2)
+                cv2.rectangle(image_labled, (left, top), (right, bottom), boxColor, 3)
                 cv2.putText(image_labled, label + " " + str(round(confidence, 2)),
-                                (left, top-10), cv2.FONT_HERSHEY_SIMPLEX, 1, boxColor, 1)
+                                (left, top-10), cv2.FONT_HERSHEY_SIMPLEX, 1.5, boxColor, 1)
 
                 object_number += 1
 
+
+
         # 保存数据
         saveData = False
-        savaPath =  file_dir
+        savaPath =  '/media/lcq/F17B-8FA1/pf-output-0708/yolov4/'
         if saveData:
             with open(savaPath + 'number.txt', 'a') as f:
                 f.write(image_name + ',' + str(object_number) + '\n')
@@ -369,7 +375,9 @@ def image_list():
 
         i += 1
 
-
+    print("time used: {}".format(time.time()-start_time))
+    print('===================== End =====================')
+    
 if __name__ == "__main__":
 
     image_list()
